@@ -167,38 +167,33 @@ impl Editor {
     }
 
     /// Moves the cursor up a line, keeping its x value if possible
-    /// TODO
     fn cursor_up(&mut self) {
-        let index = self.cursor_to_index();
-
         // Make sure we don't overstep our boundaries.
-        if index+1 == self.text.len() {
+        if self.cursor_y == 0 {
             return;
         }
 
-        if self.text[index + 1] == '\n' {
-            self.cursor_x = 0;
-            self.cursor_y += 1;
-        } else {
-            self.cursor_x += 1;
+        let target_row = self.cursor_y - 1;
+        let target_col = self.cursor_x;
+
+        while self.cursor_y != target || self.cursor_x > target_col {
+            self.cursor_back();
         }
     }
 
-    /// Moves the cursor forward, moving it down a line if it passes an \n
+    /// Moves the cursor down a line, keeping its x value if possible
     /// TODO
     fn cursor_down(&mut self) {
-        let index = self.cursor_to_index();
-
         // Make sure we don't overstep our boundaries.
-        if index+1 == self.text.len() {
+        if self.cursor_y == 0 {
             return;
         }
 
-        if self.text[index + 1] == '\n' {
-            self.cursor_x = 0;
-            self.cursor_y += 1;
-        } else {
-            self.cursor_x += 1;
+        let target_row = self.cursor_y - 1;
+        let target_col = self.cursor_x;
+
+        while self.cursor_y != target || self.cursor_x > target_col {
+            self.cursor_back();
         }
     }
 
