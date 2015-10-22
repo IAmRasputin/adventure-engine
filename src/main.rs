@@ -12,10 +12,8 @@ use editor::Editor;
 fn main() {
     let mut editor = Editor::new();
 
-    loop {
-        if !editor.quit() {
-            editor.get_events();
-            editor.write();
-        }
+    while !editor.quit() {
+        editor.get_events();
+        editor.write();
     }
 }

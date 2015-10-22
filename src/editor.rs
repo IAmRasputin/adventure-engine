@@ -175,11 +175,13 @@ impl Editor {
 
     /// Removes the character before the cursor. Compare code with cursor_back
     fn backspace(&mut self) {
-        if self.cursor_x == 0 && self.cursor_y == 0 {
-            return;
-        } else {
-            self.cursor_back();
-            self.text[self.cursor_y].remove(self.cursor_x);
+        match (self.cursor_x == 0, self.cursor_y == 0) {
+            (true, true) => return,
+            (true, false) => { self.cursor_back() },
+            _ => {
+                self.cursor_back();
+                self.text[self.cursor_y].remove(self.cursor_x);
+            },
         }
     }
 
