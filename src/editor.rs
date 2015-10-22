@@ -15,7 +15,7 @@ pub struct Editor {
 
     text: Vec<Vec<char>>, //Sorted by lines.
 
-    ui: RustBox
+    ui: RustBox,
 }
 
 impl Editor {
@@ -57,12 +57,12 @@ impl Editor {
                     },
 
                     Some(Key::Enter) => {
-                        self.type_char('\n');
+                        self.newline();
                     },
 
                     Some(Key::Tab) => {
-                        self.type_char('\t');
-                    }
+                        self.tab();
+                    },
 
 
                     Some(Key::Up) => {
@@ -81,7 +81,9 @@ impl Editor {
 
                     Some(Key::Char(c)) => { 
                         self.type_char(c);
-                    }
+                    },
+
+
                     _ => {}
                 }
             },
@@ -185,31 +187,24 @@ impl Editor {
         }
     }
 
-    // Note to self: What's the point of passing in '\n' if that's not what's 
-    // actually being written to the Vec?  I should find a better way.  
-    // TODO: Maybe break this into multiple functions.
     fn type_char(&mut self, c: char) {
-        match c {
-            '\n' => {
-                self.text.insert(self.cursor_y + 1, vec![]);
-                self.cursor_down();
-            },
+        self.text[self.cursor_y].insert(self.cursor_x, c);
+        self.cursor_fwd();
+    }
 
-            '\t' => {
-                for i in 0..4 { 
-                    self.text[self.cursor_y].insert(self.cursor_x, ' ');
-                    self.cursor_fwd();
-                }
-            }
-
-            _ => {
-                self.text[self.cursor_y].insert(self.cursor_x, c);
-                self.cursor_fwd();
-            }
-        }
-                
+    fn newline(&mut self) {
+        self.text.insert(self.cursor_y + 1, vec![]);
+        self.cursor_down();
     }
     
+    fn tab(&mut self) {
+        for i in 0..4 { 
+            self.text[self.cursor_y].insert(self.cursor_x, ' ');
+            self.cursor_fwd();
+        }
+    }
+
+    /// Takes the character data, and prints it to the screen.
     pub fn write(&self) {
         self.ui.present();
         self.ui.clear();
@@ -236,6 +231,7 @@ impl Editor {
 
     }
 
+    /// Sees if the "quit" flag has been tripped.
     pub fn quit(&self) -> bool { self.quit }
 }
 
