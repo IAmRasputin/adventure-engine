@@ -6,14 +6,14 @@ use std::default::Default;
 use rustbox::{Color, RustBox, Key, Event};
 
 pub struct Editor {
-    cursor_x: i32,
-    cursor_y: i32,
+    cursor_x: usize,
+    cursor_y: usize,
     cursor_life_ms: i32,
     cursor_visible: bool,
 
     quit: bool,
 
-    text: Vec<char>,
+    text: Vec<Vec<char>>, //Sorted by lines.
 
     ui: RustBox
 }
@@ -34,7 +34,7 @@ impl Editor {
             cursor_life_ms: 1000,
             cursor_visible: true,
             quit: false, // Except for this one.  This needs to be false.
-            text: vec![], 
+            text: vec![vec![]], 
             ui: rb,
         }
     }
@@ -45,7 +45,7 @@ impl Editor {
         // Again, this doesn't HAVE to be 3 milliseconds.
         // But it's a sane enough default for now.
         // TODO
-        match rustbox.peek_event(Duration::milliseconds(3), false) {
+        match self.ui.peek_event(Duration::milliseconds(3), false) {
             Ok(Event::KeyEvent(key)) => {
                 match key {
                     Some(Key::Esc) => { 
@@ -59,6 +59,10 @@ impl Editor {
                     Some(Key::Enter) => {
                         self.type_char('\n');
                     },
+
+                    Some(Key::Tab) => {
+                        self.type_char('\t');
+                    }
 
 
                     Some(Key::Up) => {
@@ -86,125 +90,151 @@ impl Editor {
         }
     }
 
-    /// Translates the current cursor location into an index in "self.text"
-    fn cursor_to_index(&self) -> i32 {
-        let mut i = 0;
-        let mut x = 0;
-        let mut y = 0;
-
-        for c in self.text {
-            if (x, y) == (self.cursor_x, self.cursor_y) {
-                break;
-            } else {
-                if c == '\n' {
-                    y += 1;
-                    x = 0;
-                } else if c == '\t' {
-                    x += 4;
-                } else {
-                    x += 1;
-                }
-
-                i += 1;
-            }
-        }
-
-        i
-    }
-
-    /// Translates an index to the on-screen x,y position
-    fn index_to_cursor(&self, index: i32) -> (i32, i32) {
-        let mut i = 0;
-        let mut x = 0;
-        let mut y = 0;
-
-        for c in self.text {
-           if i < index { 
-               if c == '\n' {
-                   y += 1;
-                   x = 0;
-               } else if c == '\t' {
-                   x += 4;
-               } else {
-                   x += 1;
-               }
-
-               i += 1;
-           }
-        }
-
-        (x, y)
-    }
-
     /// Moves the cursor forward, moving it down a line if it passes an \n
     fn cursor_fwd(&mut self) {
-        let index = self.cursor_to_index();
+        let max_x = self.text[self.cursor_y].len();
+        let max_y = self.text.len() - 1;
+        
+        // Basically, don't move down past the last line.
+        match (self.cursor_x < max_x, self.cursor_y < max_y) {
+            (true, _) => {
+                self.cursor_x += 1;
+            },
 
-        // Make sure we don't overstep our boundaries.
-        if index+1 == self.text.len() {
-            return;
+            (false, true) => {
+                self.cursor_x = 0;
+                self.cursor_y += 1;
+            },
+
+            (false, false) => {
+                return;
+            },
         }
 
-        if self.text[index + 1] == '\n' {
-            self.cursor_x = 0;
-            self.cursor_y += 1;
-        } else {
-            self.cursor_x += 1;
-        }
     }
 
     /// Moves the cursor backward, moving it down a line if it passes an \n
     fn cursor_back(&mut self) {
-        let index = self.cursor_to_index() - 1;
+        let min_x = 0;
+        let min_y = 0;
+        
+        match (self.cursor_x > min_x, self.cursor_y > min_y) {
+            (true, _) => {
+                self.cursor_x -= 1;
+            },
 
-        // Make sure we don't overstep our boundaries.
-        if index <= 0 {
-            return;
-        } else {
-            let (x, y) = self.index_to_cursor(index);
-            (self.cursor_x, self.cursor_y) = (x, y);
+            (false, true) => {
+                self.cursor_y -= 1;
+                self.cursor_x = self.text[self.cursor_y].len();
+            },
+
+            (false, false) => {
+                return;
+            },
         }
     }
 
     /// Moves the cursor up a line, keeping its x value if possible
     fn cursor_up(&mut self) {
-        // Make sure we don't overstep our boundaries.
-        if self.cursor_y == 0 {
-            return;
-        }
+        let min_y = 0;
+        
+        // Basically, don't move up past the first line.
+        match self.cursor_y > min_y {
+            true => {
+                self.cursor_y -= 1;
+                let max_x = self.text[self.cursor_y].len();
+                if self.cursor_x > max_x {
+                    self.cursor_x = max_x;
+                }
+            },
 
-        let target_row = self.cursor_y - 1;
-        let target_col = self.cursor_x;
-
-        while self.cursor_y != target || self.cursor_x > target_col {
-            self.cursor_back();
+            false => {
+                return;
+            },
         }
     }
 
     /// Moves the cursor down a line, keeping its x value if possible
-    /// TODO
     fn cursor_down(&mut self) {
-        // Make sure we don't overstep our boundaries.
-        if self.cursor_y == 0 {
-            return;
-        }
+        let max_y = self.text.len() - 1;
 
-        let target_row = self.cursor_y - 1;
-        let target_col = self.cursor_x;
+        match self.cursor_y < max_y {
+            true => {
+                self.cursor_y += 1;
+                let max_x = self.text[self.cursor_y].len();
+                if self.cursor_x > max_x {
+                    self.cursor_x = max_x;
+                }
+            },
 
-        while self.cursor_y != target || self.cursor_x > target_col {
-            self.cursor_back();
+            false => {
+                return;
+            },
         }
     }
 
+    /// Removes the character before the cursor. Compare code with cursor_back
     fn backspace(&mut self) {
-        let index = self.cursor_to_index();
-        self.text.remove(index);
+        if self.cursor_x == 0 && self.cursor_y == 0 {
+            return;
+        } else {
+            self.cursor_back();
+            self.text[self.cursor_y].remove(self.cursor_x);
+        }
     }
 
-    // TODO:
-    //      type_char
-    //      write
+    // Note to self: What's the point of passing in '\n' if that's not what's 
+    // actually being written to the Vec?  I should find a better way.  
+    // TODO: Maybe break this into multiple functions.
+    fn type_char(&mut self, c: char) {
+        match c {
+            '\n' => {
+                self.text.insert(self.cursor_y + 1, vec![]);
+                self.cursor_down();
+            },
+
+            '\t' => {
+                for i in 0..4 { 
+                    self.text[self.cursor_y].insert(self.cursor_x, ' ');
+                    self.cursor_fwd();
+                }
+            }
+
+            _ => {
+                self.text[self.cursor_y].insert(self.cursor_x, c);
+                self.cursor_fwd();
+            }
+        }
+                
+    }
+    
+    pub fn write(&self) {
+        self.ui.present();
+        self.ui.clear();
+
+        self.ui.set_cursor(self.cursor_x as isize, self.cursor_y as isize);
+
+        // These values represent which spot we're currently writing on.
+        // They have nothing to do with the cursor.
+        let mut x = 0;
+        let mut y = 0;
+
+        for line in self.text.clone() {
+            for c in line {
+                self.ui.print_char(x, y, 
+                                   rustbox::RB_NORMAL,
+                                   Color::Default,
+                                   Color::Default,
+                                   c);
+                x += 1;
+            }
+            x = 0;
+            y += 1;
+        }
+
+    }
+
+    pub fn quit(&self) -> bool { self.quit }
 }
 
 
