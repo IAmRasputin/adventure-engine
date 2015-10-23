@@ -2,6 +2,7 @@ extern crate rustbox;
 extern crate time;
 
 mod editor;
+mod banner;
 
 use time::Duration;
 use std::default::Default;
@@ -15,8 +16,5 @@ fn main() {
     while !editor.quit() {
         editor.get_events();
         editor.write();
-        editor.set_banner("AdventureEngine 0.0.1".to_string(),
-                          "".to_string(),
-                          "Press ESC to quit".to_string());
     }
 }

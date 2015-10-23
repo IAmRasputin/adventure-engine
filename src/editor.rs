@@ -7,13 +7,7 @@ use std::fs::File;
 use std::path::Path;
 use std::io::prelude::*;
 use rustbox::{Color, RustBox, Key, Event};
-
-enum BannerVisible {
-    Default,
-    Message,
-    Input,
-    Hidden,
-}
+use ::banner::Banner;
 
 pub struct Editor {
     cursor_x: usize,
@@ -24,16 +18,6 @@ pub struct Editor {
     quit: bool,
 
     text: Vec<Vec<char>>, //Sorted by lines.
-
-    /*
-    banner_visible: BannerVisible,
-    banner_default_l: String,
-    banner_default_r: String,
-    banner_msg_ms: i32,
-    banner_msg: String,
-    banner_input_msg: String,
-    banner_input_string: String,
-    */
 
     banner: Banner,
 
@@ -66,8 +50,8 @@ impl Editor {
             banner_input_msg: "",
             banner_input_string: "",
             */
-            // TODO
-            //banner: Banner::new(),
+            banner: Banner::new("AdventureEngine 0.0.1".to_string(),
+                                "Save: ^s  Open: ^o  Quit: ESC".to_string()),
             ui: rb,
         }
     }
@@ -248,7 +232,7 @@ impl Editor {
     }
 
     /// Takes the character data, and prints it to the screen.
-    pub fn write(&self) {
+    pub fn write(&mut self) {
         self.ui.present();
         self.ui.clear();
 
@@ -272,7 +256,7 @@ impl Editor {
             y += 1;
         }
 
-        //TODO self.banner.write();
+        self.banner.display_banner(&mut self.ui);
     }
 
     /// Sees if the "quit" flag has been tripped.
@@ -280,8 +264,8 @@ impl Editor {
 
     /// Saves the text in the current editor to a file.
     /// TODO: Make this work with an arbitrary path.  Maybe get from banner?
-    fn save(&self) {
-        //TODO let path = self.banner_input("Save to: ");
+    fn save(&mut self) {
+        let path = Path::new("test.txt");
 
         let mut file = match File::create(&path) {
             Err(why) => {
@@ -299,7 +283,9 @@ impl Editor {
 
             match file.write_all(s.as_bytes()) {
                 Err(why) => panic!("{}", &why),
-                Ok(_) => {},
+                Ok(_) => {
+                    self.banner.message("Saved to test.txt".to_string());
+                },
             }
         }
     }
