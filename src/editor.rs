@@ -3,6 +3,9 @@ extern crate time;
 
 use time::Duration;
 use std::default::Default;
+use std::fs::File;
+use std::path::Path;
+use std::io::prelude::*;
 use rustbox::{Color, RustBox, Key, Event};
 
 pub struct Editor {
@@ -62,6 +65,10 @@ impl Editor {
 
                     Some(Key::Tab) => {
                         self.tab();
+                    },
+
+                    Some(Key::Ctrl('s')) => {
+                        self.save();
                     },
 
 
@@ -179,10 +186,16 @@ impl Editor {
     fn backspace(&mut self) {
         match (self.cursor_x == 0, self.cursor_y == 0) {
             (true, true) => return,
-            (true, false) => { self.cursor_back() },
-            _ => {
+            (false, _) => { 
                 self.cursor_back();
                 self.text[self.cursor_y].remove(self.cursor_x);
+            },
+            (true, false) => {
+                self.cursor_back();
+
+                if self.text[self.cursor_y + 1].is_empty() {
+                    self.text.remove(self.cursor_y + 1);
+                }
             },
         }
     }
@@ -260,7 +273,32 @@ impl Editor {
     }
 
 
-
+    /// Saves the text in the current editor to a file.
+    /// TODO: Make this work with an arbitrary path.  Maybe get from banner?
+    fn save(&self) {
+        // Test code, please ignore
+//        let path = Path::new("test.txt");
+//
+//        let mut file = match File::create(&path) {
+//            Err(why) => {
+//                //TODO: change this to a banner message.
+//                panic!("Failed to create file");
+//            },
+//            Ok(file) => file,
+//        };
+//
+//        for line in self.text.clone() {
+//            let mut s : String = line
+//                                    .into_iter()
+//                                    .collect::<String>();
+//            s.push('\n');
+//
+//            match file.write_all(s.as_bytes()) {
+//                Err(why) => panic!("{}", &why),
+//                Ok(_) => {},
+//            }
+//        }
+    }
 }
 
 
