@@ -8,6 +8,13 @@ use std::path::Path;
 use std::io::prelude::*;
 use rustbox::{Color, RustBox, Key, Event};
 
+enum BannerVisible {
+    Default,
+    Message,
+    Input,
+    Hidden,
+}
+
 pub struct Editor {
     cursor_x: usize,
     cursor_y: usize,
@@ -17,6 +24,18 @@ pub struct Editor {
     quit: bool,
 
     text: Vec<Vec<char>>, //Sorted by lines.
+
+    /*
+    banner_visible: BannerVisible,
+    banner_default_l: String,
+    banner_default_r: String,
+    banner_msg_ms: i32,
+    banner_msg: String,
+    banner_input_msg: String,
+    banner_input_string: String,
+    */
+
+    banner: Banner,
 
     ui: RustBox,
 }
@@ -38,6 +57,17 @@ impl Editor {
             cursor_visible: true,
             quit: false, // Except for this one.  This needs to be false.
             text: vec![vec![]], 
+            /*
+            banner_default_visible: BannerVisible::Default,
+            banner_default_l: "AdventureEngine 0.0.1",
+            banner_default_r: "Save: ^s  Open: ^o  Quit: ESC",
+            banner_msg_ms: 0,
+            banner_msg: "",
+            banner_input_msg: "",
+            banner_input_string: "",
+            */
+            // TODO
+            //banner: Banner::new(),
             ui: rb,
         }
     }
@@ -242,62 +272,36 @@ impl Editor {
             y += 1;
         }
 
+        //TODO self.banner.write();
     }
 
     /// Sees if the "quit" flag has been tripped.
     pub fn quit(&self) -> bool { self.quit }
 
-    /// Sets the banner, or the bottom row of the screen, to display a message
-    /// The three messages will be right, center, and left aligned respectively.
-    pub fn set_banner(&mut self, r_msg: String, c_msg: String, l_msg: String) {
-        let bot = self.ui.height() - 1;
-        let width = self.ui.width();
-
-        self.ui.print(0, bot,
-                      rustbox::RB_NORMAL,
-                      Color::Default,
-                      Color::Default,
-                      &r_msg);
-
-        self.ui.print(width/2, bot,
-                      rustbox::RB_NORMAL,
-                      Color::Default,
-                      Color::Default,
-                      &c_msg);
-
-        self.ui.print(width - l_msg.len(), bot,
-                      rustbox::RB_NORMAL,
-                      Color::Default,
-                      Color::Default,
-                      &l_msg);
-    }
-
-
     /// Saves the text in the current editor to a file.
     /// TODO: Make this work with an arbitrary path.  Maybe get from banner?
     fn save(&self) {
-        // Test code, please ignore
-//        let path = Path::new("test.txt");
-//
-//        let mut file = match File::create(&path) {
-//            Err(why) => {
-//                //TODO: change this to a banner message.
-//                panic!("Failed to create file");
-//            },
-//            Ok(file) => file,
-//        };
-//
-//        for line in self.text.clone() {
-//            let mut s : String = line
-//                                    .into_iter()
-//                                    .collect::<String>();
-//            s.push('\n');
-//
-//            match file.write_all(s.as_bytes()) {
-//                Err(why) => panic!("{}", &why),
-//                Ok(_) => {},
-//            }
-//        }
+        //TODO let path = self.banner_input("Save to: ");
+
+        let mut file = match File::create(&path) {
+            Err(why) => {
+                //TODO: change this to a banner message.
+                panic!("Failed to create file");
+            },
+            Ok(file) => file,
+        };
+
+        for line in self.text.clone() {
+            let mut s : String = line
+                                    .into_iter()
+                                    .collect::<String>();
+            s.push('\n');
+
+            match file.write_all(s.as_bytes()) {
+                Err(why) => panic!("{}", &why),
+                Ok(_) => {},
+            }
+        }
     }
 }
 
