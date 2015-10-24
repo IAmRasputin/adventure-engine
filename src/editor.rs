@@ -85,6 +85,9 @@ impl Editor {
                         self.save();
                     },
 
+                    Some(Key::Ctrl('o')) => {
+                        self.open();
+                    }
 
                     Some(Key::Up) => {
                         self.cursor_up();
@@ -263,31 +266,51 @@ impl Editor {
     pub fn quit(&self) -> bool { self.quit }
 
     /// Saves the text in the current editor to a file.
-    /// TODO: Make this work with an arbitrary path.  Maybe get from banner?
+    /// TODO: THIS METHOD IS GARBAGE.  PLEASE PUT IT OUT OF ITS MISERY.
     fn save(&mut self) {
-        let path = Path::new("test.txt");
+        // Get the path to which to save the file.
+        let path = match self.banner.input(
+                        "Save to file: ".to_string(), &mut self.ui) {
+            Ok(p) => p,
+            Err(_) => return, // :( Gotta find a more rust-y way to do this.
+        };
 
+        // Create the file, clobbering it if it already exists.
+        // I think this sucks.  I can probably do better.
         let mut file = match File::create(&path) {
             Err(why) => {
-                //TODO: change this to a banner message.
-                panic!("Failed to create file");
+                self.banner.message(
+                    "Failed to save file".to_string(), 3000);
+                return;
             },
             Ok(file) => file,
         };
 
+        // Writes to the file.
         for line in self.text.clone() {
             let mut s : String = line
                                     .into_iter()
                                     .collect::<String>();
             s.push('\n');
 
+            // This too.  I hate premature returns.
             match file.write_all(s.as_bytes()) {
-                Err(why) => panic!("{}", &why),
+                Err(why) => {
+                    self.banner.message(
+                        "Failed to write to file".to_string(), 3000);
+                    return;
+                },
                 Ok(_) => {
-                    self.banner.message("Saved to test.txt".to_string());
+                    self.banner.message("Saved to test.txt".to_string(), 3000);
                 },
             }
         }
+    }
+
+    /// Opens a file for editing
+    /// TODO
+    fn open(&mut self) {
+        self.banner.message("Open called!".to_string(), 3000);
     }
 }
 
