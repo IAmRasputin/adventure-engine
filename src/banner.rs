@@ -97,22 +97,22 @@ impl Banner {
                  Color::Default,
                  &msg);
 
-        // This isn't part of the normal input/clear/write loop, so we have to
-        // clear the banner manually, so we don't clear the entire screen by
-        // accident.
-        for i in x..ui.width() {
-            ui.print_char(i, bot,
-                          rustbox::RB_NORMAL,
-                          Color::Default,
-                          Color::Default,
-                          ' ');
-        }
-
         let mut done = false;
         let mut response = String::new();
         let mut out : Result<String, String> = Err("Unknown error".to_string());
 
         while !done {
+            // This isn't part of the normal input/clear/write loop, so we have to
+            // clear the banner manually, so we don't clear the entire screen by
+            // accident.
+            for i in x..ui.width() {
+                ui.print_char(i, bot,
+                              rustbox::RB_NORMAL,
+                              Color::Default,
+                              Color::Default,
+                              ' ');
+            }
+
             ui.set_cursor(x as isize, bot as isize);
             ui.print(msg.len(), bot,
                      rustbox::RB_NORMAL,
@@ -135,8 +135,10 @@ impl Banner {
                         },
 
                         Some(Key::Backspace) => {
-                            response.remove(x - msg.len());
-                            x -= 1;
+                            if x > msg.len() {
+                                x -= 1;
+                                response.remove(x - msg.len());
+                            }
                         },
 
                         Some(Key::Char(c)) => {
