@@ -301,7 +301,9 @@ impl Editor {
                     return;
                 },
                 Ok(_) => {
-                    self.banner.message("Saved to test.txt".to_string(), 3000);
+                    self.banner.message(
+                        format!("Saved to {}", path), 
+                        3000);
                 },
             }
         }

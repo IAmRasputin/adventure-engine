@@ -97,20 +97,46 @@ impl Banner {
                  Color::Default,
                  &msg);
 
-        let response: Result<String, String> = Err("Aborted");
+        // This isn't part of the normal input/clear/write loop, so we have to
+        // clear the banner manually, so we don't clear the entire screen by
+        // accident.
+        for i in x..ui.width() {
+            ui.print_char(i, bot,
+                          rustbox::RB_NORMAL,
+                          Color::Default,
+                          Color::Default,
+                          ' ');
+        }
 
-        loop {
+        let mut done = false;
+        let mut response = String::new();
+        let mut out : Result<String, String> = Err("Unknown error".to_string());
+
+        while !done {
             ui.set_cursor(x as isize, bot as isize);
+            ui.print(msg.len(), bot,
+                     rustbox::RB_NORMAL,
+                     Color::Default,
+                     Color::Default,
+                     &response);
+            ui.present();
 
-            match ui.peek_event(Duration::milliseconds(3), false) {
+            match ui.poll_event(false) {
                 Ok(Event::KeyEvent(key)) => {
                     match key {
                         Some(Key::Esc) => {
-                            return Err("Aborted".to_string());
+                            out =  Err("Aborted".to_string());
+                            done = true;
                         },
 
                         Some(Key::Enter) => {
-                            return Ok(response);
+                            out = Ok(response.clone());
+                            done = true;
+                        },
+
+                        Some(Key::Backspace) => {
+                            response.remove(x - msg.len());
+                            x -= 1;
                         },
 
                         Some(Key::Char(c)) => {
@@ -118,13 +144,30 @@ impl Banner {
                             x += 1;
                         },
 
+                        Some(Key::Left) => {
+                            if x > msg.len() {
+                                x -= 1;
+                            }
+                        },
+                        
+                        Some(Key::Right) => {
+                            if x < msg.len() + response.len() {
+                                x += 1;
+                            }
+                        },
+
                         _ => {},
                     }
                 },
 
-                Err(e) => return Err("Error getting key event".to_string()),
+                Err(e) => {
+                    out = Err("Error getting key event".to_string());
+                    done = true;
+                },
                 _ => {},
             }
         }
+
+        out
     }
 }
