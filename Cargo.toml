@@ -6,5 +6,3 @@ authors = ["Ryan Gannon <ryanmgannon.dev@gmail.com>"]
 [dependencies]
 rustbox = "*"
 time = "*"
-
-
