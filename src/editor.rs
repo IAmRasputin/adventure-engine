@@ -312,7 +312,13 @@ impl Editor {
     /// Opens a file for editing
     /// TODO
     fn open(&mut self) {
-        self.banner.message("Open called!".to_string(), 3000);
+        match self.banner.yes_no("Open file? (y/N)".to_string(), 
+                                 'y', 
+                                 'n', 
+                                 &mut self.ui) {
+            true => self.banner.message("Yes!".to_string(), 3000),
+            false => self.banner.message("No!".to_string(), 3000),
+        }
     }
 }
 

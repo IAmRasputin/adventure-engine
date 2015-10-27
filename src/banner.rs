@@ -172,4 +172,43 @@ impl Banner {
 
         out
     }
+
+    pub fn yes_no(&mut self, msg: String, yes: char, no: char, ui: &mut RustBox)
+            -> bool {
+        let bot = ui.height() - 1;
+        let mut out = false;
+
+        for i in 0..ui.width() {
+            ui.print_char(i, bot,
+                          rustbox::RB_NORMAL,
+                          Color::Default,
+                          Color::Default,
+                          ' ');
+        }
+
+        ui.print(0, bot,
+                 rustbox::RB_NORMAL,
+                 Color::Default,
+                 Color::Default,
+                 &msg);
+
+        ui.present();
+
+        match ui.poll_event(false) {
+            Ok(Event::KeyEvent(key)) => {
+                if key == Some(Key::Char(yes)) {
+                    out = true;
+                } else if key == Some(Key::Char(no)) {
+                    out = false;
+                }
+            },
+
+            Err(e) => {
+                out = false;
+            },
+            _ => {},
+        }
+
+        out
+    }
 }
